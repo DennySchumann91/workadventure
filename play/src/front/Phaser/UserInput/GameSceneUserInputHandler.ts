@@ -19,6 +19,8 @@ import LL from "../../../i18n/i18n-svelte";
 import { followRoleStore, followStateStore, followUsersStore } from "../../Stores/FollowStore";
 import { localUserStore } from "../../Connection/LocalUserStore";
 import { waScaleManager } from "../Services/WaScaleManager";
+import { getMediaShortcut, mediaShortcutMatches, mediaShortcutRebindingStore } from "../../Stores/MediaShortcutStore";
+import { isMediaToggleAvailable, toggleMedia } from "../../Stores/MediaToggleStore";
 import { MapDragPointerCapture } from "./MapDragPointerCapture";
 import { MapDragGesture } from "./MapDragGesture";
 import { MapPanShortcut } from "./MapPanShortcut";
@@ -359,6 +361,25 @@ export class GameSceneUserInputHandler implements UserInputHandlerInterface {
         }
     }
     public handleKeyDownEvent(event: KeyboardEvent): KeyboardEvent {
+        if (
+            get(mediaShortcutRebindingStore) ||
+            event.target instanceof HTMLInputElement ||
+            event.target instanceof HTMLTextAreaElement ||
+            event.target instanceof HTMLSelectElement ||
+            (event.target instanceof HTMLElement && event.target.isContentEditable)
+        ) {
+            return event;
+        }
+        if (mediaShortcutMatches(event, getMediaShortcut("microphone")) && isMediaToggleAvailable("microphone")) {
+            event.preventDefault();
+            toggleMedia("microphone");
+            return event;
+        }
+        if (mediaShortcutMatches(event, getMediaShortcut("camera")) && isMediaToggleAvailable("camera")) {
+            event.preventDefault();
+            toggleMedia("camera");
+            return event;
+        }
         const hasExecutedCommand = this.gameScene.getMapEditorModeManager()?.handleKeyDownEvent(event);
         if (hasExecutedCommand) {
             return event;
